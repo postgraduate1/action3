@@ -43,7 +43,7 @@ fcm为默认通知方式，其他方式请查看notify.py，切换通知方式�
 6. 在action里启动或者 右上角 Star 启动并查看log
 7. 已经默认启用定时在 rsschan/.github/workflows/main.yaml 修改 cron */30 * * * * （秒（可选）分 时 天 月 周） 每30分钟执行一次
 
-
+#腾讯云由于7月份开始收费，请尝试使用其他服务。定时发送curl请求。什么都可以做到。包括路由器脚本
 # 云函数实现精准定时 （可选，私密库无法请求）
 1. 创建 Github token，前往 https://github.com/settings/tokens/new
 - Note： rss （可选）
