@@ -12,7 +12,7 @@ def delhtml(t):
     
 
     #一个汉字占2字节
-    if len(nohtml) > 256:
+    if len(nohtml) > 60:
         return '\n文章过长请查看原文'
     else:
         return '\n'+nohtml
@@ -46,7 +46,7 @@ def GetNewRSS(url):
             #notify.send(f.feed.title+'  '+post.title, delhtml(post.description)+post.link)
             
             #使用fcm方式发送 这个消息带链接只可用这种方式 不带链接用send即可
-            #notify.send(post.title,f.feed.title+delhtml(post.description), post.link)
+            #notify.fcm(post.title,f.feed.title+delhtml(post.description), post.link)
             
             #notify.mipush(f.feed.title+post.published, post.title+delhtml(post.description))
 
