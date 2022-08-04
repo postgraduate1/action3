@@ -41,11 +41,12 @@ def GetNewRSS(url):
             print(f.feed.title,post.title)
 
             #<a 超链接套住标题 /a> 文章发布时间 删除html转义了的文章内容
-            #notify.send('<a href="'+post.link+'">'+f.feed.title+' - '+post.title+'</a>\n', delhtml(post.description))
+            notify.send('<a href="'+post.link+'">'+f.feed.title+' - '+post.title+'</a>\n', delhtml(post.description))
             #notify.send(f.feed.title+post.title, delhtml(post.description), post.link)
             #notify.send(f.feed.title+'  '+post.title, delhtml(post.description)+post.link)
+            
             #使用fcm方式发送 这个消息带链接只可用这种方式 不带链接用send即可
-            notify.fcm(post.title,f.feed.title+delhtml(post.description), post.link)
+            #notify.send(post.title,f.feed.title+delhtml(post.description), post.link)
             
             #notify.mipush(f.feed.title+post.published, post.title+delhtml(post.description))
 
