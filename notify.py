@@ -31,6 +31,8 @@ def print(text, *args, **kw):
 push_config = {
     'HITOKOTO': False,                  # 启用一言（随机句子）
     
+    'PUSHDEER_KEY':'',                  # MIPUSH & Pushdeer http://www.pushdeer.com/
+    
     'MIPUSH_TOPIC':'',                  # MIPUSH 安卓应用 “消息接收”
     
     'FCM_KEY':'',                       # https://github.com/SimonMarquis/FCM-toolbox 下载apk 右上三点 Topics 设置标签， share token 复制创建新变量 FCM_KEY即可，第一次需要梯子用来注册，后续不用挂这，后台建议关闭电池优化
@@ -89,7 +91,16 @@ for k in push_config:
     if os.getenv(k):
         v = os.getenv(k)
         push_config[k] = v
-        
+
+def pushdeer(title: str, content: str) -> None:
+    """
+    Pushdeer
+    """
+    data = {"pushkey":push_config.get("PUSHDEER_KEY"),"text": title, "desp": content}
+    url = 'https://api2.pushdeer.com/message/push'
+    response = requests.post(url, data=data)
+    print(response)
+    
 def mipush(title: str, content: str) -> None:
     """
     MIPUSH 安卓应用 ‘消息接收’ 
@@ -99,7 +110,7 @@ def mipush(title: str, content: str) -> None:
     response = requests.post(url, data=data)
     print(response)
     
-def fcm(title: str, content: str, link: str) -> None:
+def fcm(title: str, content: str,+ link: str) -> None:
     """
     https://github.com/SimonMarquis/FCM-toolbox
     """
@@ -521,8 +532,12 @@ def one() -> str:
     res = requests.get(url).json()
     return res["hitokoto"] + "    ----" + res["from"]
 
-if push_config.get("FCM_KEY"):
-    notify_function.append(fcm)
+if push_config.get("PUSHDEER_KEY"):
+    notify_function.append(pushdeer)
+if push_config.get("MIPUSH_TOPIC"):
+    notify_function.append(mipush)
+#if push_config.get("FCM_KEY"):
+#    notify_function.append(fcm)
 if push_config.get("BARK_PUSH"):
     notify_function.append(bark)
 if push_config.get("CONSOLE"):
