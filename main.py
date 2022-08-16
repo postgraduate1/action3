@@ -2,22 +2,16 @@ import feedparser
 import re
 import notify
 
-#删除多余html标签和超过2048字节数的字
+#删除多余html标签
 def delhtml(t):
     pattern = re.compile(r'<[^>]+>',re.S)
     nohtml = pattern.sub('', t)
     
     #无视字数发送
-    return nohtml
-    
+    #return nohtml
+    return nohtml[:100]+"......"
 
-    #一个汉字占2字节
-    if len(nohtml) > 60:
-        return '\n文章过长请查看原文'
-    else:
-        return '\n'+nohtml
 
-#获取最新内容
 def GetNewRSS(url):
     f=feedparser.parse(url)
     #按每篇文章进行操作
@@ -26,7 +20,7 @@ def GetNewRSS(url):
         with open("oldrss",errors='ignore') as file:
             old = file.read()
             
-        #检查文章链接是否存在如果不存在则
+        #检查文章链接是否存在如果不存在则推送
         if not post.link in old:
             """
             f.feed.title     媒体名称
@@ -37,19 +31,13 @@ def GetNewRSS(url):
             <a href="url">   超链接
             """
 
+            #特殊渠道需要传 link 参数 比如 feishu fcm     notify.feishu(post.title,delhtml(post.description),post.link)
+            #默认渠道不需要send                        notify.send(f.feed.title+'  '+post.title, delhtml(post.description)+post.link)
+            notify.feishu(post.title,delhtml(post.description),post.link)
+            
+
             #打印文章标题
             print(f.feed.title,post.title)
-
-            #<a 超链接套住标题 /a> 文章发布时间 删除html转义了的文章内容
-            #notify.send('<a href="'+post.link+'">'+f.feed.title+' - '+post.title+'</a>\n', delhtml(post.description))
-            #notify.send(f.feed.title+post.title, delhtml(post.description), post.link)
-            #notify.send(f.feed.title+'  '+post.title, delhtml(post.description)+post.link)
-            
-            #使用fcm方式发送 这个消息带链接只可用这种方式 不带链接用send即可
-            notify.fcm(post.title,f.feed.title+delhtml(post.description), post.link)
-            
-            #notify.mipush(f.feed.title+post.published, post.title+delhtml(post.description))
-
             #写入oldrss记录
             oldrss=open('oldrss',mode='a+',errors='ignore')
             oldrss.writelines([f.feed.title,'  ',post.link,'  ',post.title,'\n'])
