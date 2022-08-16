@@ -43,13 +43,16 @@ push_config = {
     'BARK_SOUND': '',                   # bark 推送声音
     'BARK_ICON': '',                    # bark 推送图标
 
-    'CONSOLE': False,                    # 控制台输出
-
     'DD_BOT_SECRET': '',                # 必填 钉钉机器人的 DD_BOT_SECRET
     'DD_BOT_TOKEN': '',                 # 必填 钉钉机器人的 DD_BOT_TOKEN
 
-    'FSKEY': '',                        # 必填  飞书机器人的 FSKEY
-
+    'FSKEY': '',                        # 必填  飞书群机器人的webhook FSKEY
+    
+    #飞书企业自建应用，参考
+    'FS_APP_ID':'',
+    'FS_APP_SECRET':'',
+    'FS_RECEIVE_ID':'',
+    
     'GOBOT_URL': '',                    # 必填  go-cqhttp
                                         # 推送到个人QQ：http://127.0.0.1/send_private_msg
                                         # 群：http://127.0.0.1/send_group_msg
@@ -72,7 +75,8 @@ push_config = {
     'QMSG_KEY': '',                     # qmsg 酱的 QMSG_KEY
     'QMSG_TYPE': '',                    # qmsg 酱的 QMSG_TYPE
 
-    'QYWX_AM': '',# corpid,corpsecret,touser(注:多个成员ID使用|隔开),agentid,消息类型(选填,不填默认文本消息类型) 注意用,号隔开(英文输入法的逗号)，例如：wwcfrs,B-76WERQ,qinglong,1000001,2COat
+    'QYWX_AM': '',
+    # corpid,corpsecret,touser(注:多个成员ID使用|隔开),agentid,消息类型(选填,不填默认文本消息类型) 注意用,号隔开(英文输入法的逗号)，例如：wwcfrs,B-76WERQ,qinglong,1000001,2COat
 
     'QYWX_KEY': '',                     # 企业微信机器人
 
@@ -169,14 +173,6 @@ def bark(title: str, content: str) -> None:
     else:
         print("bark 推送失败！")
 
-
-def console(title: str, content: str) -> None:
-    """
-    使用 控制台 推送消息。
-    """
-    print(f"{title}\n\n{content}")
-
-
 def dingding_bot(title: str, content: str) -> None:
     """
     使用 钉钉机器人 推送消息。
@@ -209,7 +205,7 @@ def dingding_bot(title: str, content: str) -> None:
 
 def feishu_bot(title: str, content: str) -> None:
     """
-    使用 飞书机器人 推送消息。
+    使用 飞书群机器人 推送消息。
     """
     if not push_config.get("FSKEY"):
         print("飞书 服务的 FSKEY 未设置!!\n取消推送")
@@ -225,7 +221,53 @@ def feishu_bot(title: str, content: str) -> None:
     else:
         print("飞书 推送失败！错误信息如下：\n", response)
 
+#消息卡片
+def interactive(title,link,text):
+    interactive={
+        "elements": [
+            {
+            "tag": "markdown",
+            "content": f"**[{title}]({link})**\n --------------\n{text}"
+            }
+        ]
+    }
+    return interactive
 
+def feishu(title: str, text: str,link: str) -> None:
+    """
+    使用 飞书机器人 自建应用 推送消息。
+    """
+    if not push_config.get("FS_APP_ID"):
+        print("飞书 服务的 FS_APP_ID 未设置!!\n取消推送")
+        return
+    print("飞书 机器人 服务启动")
+    
+    #GET tenant_access_token
+    url = "	https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
+    headers = {'Content-Type': 'application/json'}
+    params = {"app_id":FS_APP_ID,"app_secret": FS_APP_SECRET}
+    response = requests.request("POST", url, params=params, headers=headers)
+    token=json.loads(response.content)
+    tenant_access_token=token['tenant_access_token']
+    
+    #SEND
+    req = {"receive_id": FS_RECEIVE_ID,
+           "content": json.dumps(interactive(title,link,text)),
+           "msg_type": "interactive",}
+    response = requests.request("POST","https://open.feishu.cn/open-apis/im/v1/messages",
+                                params={"receive_id_type":"user_id"},
+                                headers={'Authorization': 'Bearer '+tenant_access_token,
+                                         'Content-Type': 'application/json'},
+                                data=json.dumps(req))
+    url = f'https://open.feishu.cn/open-apis/bot/v2/hook/{push_config.get("FSKEY")}'
+    data = {"msg_type": "text", "content": {"text": f"{title}\n\n{content}"}}
+    response = requests.post(url, data=json.dumps(data)).json()
+
+    if response.get("StatusCode") == 0:
+        print("飞书 推送成功！")
+    else:
+        print("飞书 推送失败！错误信息如下：\n", response)
+        
 def go_cqhttp(title: str, content: str) -> None:
     """
     使用 go_cqhttp 推送消息。
@@ -546,6 +588,8 @@ if push_config.get("DD_BOT_TOKEN") and push_config.get("DD_BOT_SECRET"):
     notify_function.append(dingding_bot)
 if push_config.get("FSKEY"):
     notify_function.append(feishu_bot)
+if push_config.get("FS_APP_ID"):
+    notify_function.append(feishut)
 if push_config.get("GOBOT_URL") and push_config.get("GOBOT_QQ"):
     notify_function.append(go_cqhttp)
 if push_config.get("GOTIFY_URL") and push_config.get("GOTIFY_TOKEN"):
