@@ -49,9 +49,9 @@ push_config = {
     'FSKEY': '',                        # 必填  飞书群机器人的webhook FSKEY
     
     #飞书企业自建应用，参考
-    'FS_APP_ID':'',
-    'FS_APP_SECRET':'',
-    'FS_RECEIVE_ID':'',
+    'FS_APP_ID':'cli_a271a18ec538900e',
+    'FS_APP_SECRET':'wSVPUkb9wKTC4oYstzC4zhhxhSOTNlYq',
+    'FS_RECEIVE_ID':'ccedeaf6',
     
     'GOBOT_URL': '',                    # 必填  go-cqhttp
                                         # 推送到个人QQ：http://127.0.0.1/send_private_msg
@@ -114,7 +114,7 @@ def mipush(title: str, content: str) -> None:
     response = requests.post(url, data=data)
     print(response)
     
-def fcm(title: str, content: str,+ link: str) -> None:
+def fcm(title: str, content: str,link: str) -> None:
     """
     https://github.com/SimonMarquis/FCM-toolbox
     """
@@ -233,7 +233,7 @@ def feishu(title: str, text: str,link: str) -> None:
     #GET tenant_access_token
     url = "	https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal"
     headers = {'Content-Type': 'application/json'}
-    params = {"app_id":FS_APP_ID,"app_secret": FS_APP_SECRET}
+    params = {"app_id":push_config.get("FS_APP_ID"),"app_secret": push_config.get("FS_APP_SECRET")}
     response = requests.request("POST", url, params=params, headers=headers)
     token=json.loads(response.content)
     tenant_access_token=token['tenant_access_token']
@@ -247,7 +247,7 @@ def feishu(title: str, text: str,link: str) -> None:
             }
         ]
     }
-    req = {"receive_id": FS_RECEIVE_ID,
+    req = {"receive_id": push_config.get("FS_RECEIVE_ID"),
            "content": json.dumps(interactive),
            "msg_type": "interactive",}
     response = requests.request("POST","https://open.feishu.cn/open-apis/im/v1/messages",
@@ -255,14 +255,10 @@ def feishu(title: str, text: str,link: str) -> None:
                                 headers={'Authorization': 'Bearer '+tenant_access_token,
                                          'Content-Type': 'application/json'},
                                 data=json.dumps(req))
-    url = f'https://open.feishu.cn/open-apis/bot/v2/hook/{push_config.get("FSKEY")}'
-    data = {"msg_type": "text", "content": {"text": f"{title}\n\n{content}"}}
-    response = requests.post(url, data=json.dumps(data)).json()
-
-    if response.get("StatusCode") == 0:
-        print("飞书 推送成功！")
+    if response.status_code == 200:
+        print("飞书机器人 推送成功！")
     else:
-        print("飞书 推送失败！错误信息如下：\n", response)
+        print("飞书机器人 推送失败！")
         
 def go_cqhttp(title: str, content: str) -> None:
     """
@@ -578,14 +574,12 @@ if push_config.get("MIPUSH_TOPIC"):
 #    notify_function.append(fcm)
 if push_config.get("BARK_PUSH"):
     notify_function.append(bark)
-if push_config.get("CONSOLE"):
-    notify_function.append(console)
 if push_config.get("DD_BOT_TOKEN") and push_config.get("DD_BOT_SECRET"):
     notify_function.append(dingding_bot)
 if push_config.get("FSKEY"):
     notify_function.append(feishu_bot)
-if push_config.get("FS_APP_ID"):
-    notify_function.append(feishut)
+#if push_config.get("FS_APP_ID"):
+#    notify_function.append(feishu)
 if push_config.get("GOBOT_URL") and push_config.get("GOBOT_QQ"):
     notify_function.append(go_cqhttp)
 if push_config.get("GOTIFY_URL") and push_config.get("GOTIFY_TOKEN"):
