@@ -221,18 +221,6 @@ def feishu_bot(title: str, content: str) -> None:
     else:
         print("飞书 推送失败！错误信息如下：\n", response)
 
-#消息卡片
-def interactive(title,link,text):
-    interactive={
-        "elements": [
-            {
-            "tag": "markdown",
-            "content": f"**[{title}]({link})**\n --------------\n{text}"
-            }
-        ]
-    }
-    return interactive
-
 def feishu(title: str, text: str,link: str) -> None:
     """
     使用 飞书机器人 自建应用 推送消息。
@@ -251,8 +239,16 @@ def feishu(title: str, text: str,link: str) -> None:
     tenant_access_token=token['tenant_access_token']
     
     #SEND
+    interactive={
+        "elements": [
+            {
+            "tag": "markdown",
+            "content": f"**[{title}]({link})**\n --------------\n{text}"
+            }
+        ]
+    }
     req = {"receive_id": FS_RECEIVE_ID,
-           "content": json.dumps(interactive(title,link,text)),
+           "content": json.dumps(interactive),
            "msg_type": "interactive",}
     response = requests.request("POST","https://open.feishu.cn/open-apis/im/v1/messages",
                                 params={"receive_id_type":"user_id"},
